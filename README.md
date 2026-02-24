@@ -32,7 +32,7 @@ This is a **cross-sectional study**, so for each observation represents a county
 ├── LICENSE                             # MIT License
 ├── code/
 │   └── initlal_data_exploratory.ipynb  # Data exploration & challenge discovery
-│   └── database_pipeline  # database management pedagogical reasoing & implementation (analysis-readiness)
+│   └── database_pipeline  # database management pedagogical reasoning & implementation (analysis-readiness)
 ├── data/
 │   ├── FY25_FMRs-Table 1.csv          # HUD Fair Market Rents (raw)
 │   ├── Field_Descriptions-Table 1.csv  # HUD field documentation
