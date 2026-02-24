@@ -151,7 +151,7 @@ Two SQL views support analysis:
    - Creates tables and inserts data into `disaster_impact_db`
    - Creates analysis views
 
-4. **Verify** the database with the verification queries documented in the verification notebook [extra reading alert but feel free to check it out: ](https://drive.google.com/file/d/1OSIwjfpD2X4gO4Ed4qCL-0lqwpepmJz7/view?usp=sharing).
+4. **Verify** the database with the verification queries documented in the verification notebook [extra reading alert but feel free to check it out!](https://drive.google.com/file/d/1OSIwjfpD2X4gO4Ed4qCL-0lqwpepmJz7/view?usp=sharing).
 
 ---
 
