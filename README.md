@@ -176,8 +176,10 @@ Two SQL views support analysis:
 
 ---
 
-Thank you for reading. Hope these make sense and interesting to all the readers!
-
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+
+***Thank you for reading. Hope these make sense and interesting to all the readers!***
+
