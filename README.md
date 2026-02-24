@@ -10,7 +10,7 @@
 
 > Can we predict the level of federal disaster assistance allocated to a county based on its pre-disaster demographic characteristics and housing cost conditions?
 
-This is a **cross-sectional study** — each observation represents a county characterized by point-in-time demographic and housing snapshots, not a time series. We link three federal data sources at the county level using standardized 5-digit FIPS codes.
+This is a **cross-sectional study**, so for each observation represents a county characterized by point-in-time demographic and housing snapshots, not a time series. We link three federal data sources at the county level using standardized 5-digit FIPS codes.
 
 ---
 
@@ -32,6 +32,7 @@ This is a **cross-sectional study** — each observation represents a county cha
 ├── LICENSE                             # MIT License
 ├── code/
 │   └── initlal_data_exploratory.ipynb  # Data exploration & challenge discovery
+│   └── database_pipeline  # database management pedagogical reasoing & implementation (analysis-readiness)
 ├── data/
 │   ├── FY25_FMRs-Table 1.csv          # HUD Fair Market Rents (raw)
 │   ├── Field_Descriptions-Table 1.csv  # HUD field documentation
