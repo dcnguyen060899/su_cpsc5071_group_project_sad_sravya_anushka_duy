@@ -31,15 +31,17 @@ This is a **cross-sectional study**, so for each observation represents a county
 ├── README.md                           # This file
 ├── LICENSE                             # MIT License
 ├── code/
-│   └── initlal_data_exploratory.ipynb  # Data exploration & challenge discovery
-│   └── database_pipeline  # database management pedagogical reasoning & implementation (analysis-readiness)
+│   ├── initlal_data_exploratory.ipynb  # Data exploration & challenge discovery
+│   ├── database_pipeline.ipynb         # Database management pedagogical reasoning & implementation (analysis-readiness)
+│   └── eda.ipynb                       # Exploratory data analysis — distributions, correlations, geographic patterns
 ├── data/
 │   ├── FY25_FMRs-Table 1.csv          # HUD Fair Market Rents (raw)
 │   ├── Field_Descriptions-Table 1.csv  # HUD field documentation
 │   ├── fema_sample_data.csv            # 10-record FEMA API sample
 │   └── census_exploration.csv          # 100-row Census sample
 └── report/
-    └── project1_SAD_DuyNguyen_Sravya_Anushka.pdf  # Project proposal
+    ├── project1_SAD_DuyNguyen_Sravya_Anushka.pdf       # Phase 1: Project proposal
+    └── project2_groupSAD_Sravya_Anushka_Duy.pdf        # Phase 2: Progress report (EDA results + plan)
 ```
 
 ---
@@ -153,6 +155,12 @@ Two SQL views support analysis:
 
 4. **Verify** the database with the verification queries documented in the verification notebook [extra reading alert but feel free to check it out!](https://drive.google.com/file/d/1OSIwjfpD2X4gO4Ed4qCL-0lqwpepmJz7/view?usp=sharing).
 
+5. **Run the EDA notebook** to explore distributions, correlations, and geographic patterns in the analysis-ready dataset:
+   ```
+   code/eda.ipynb
+   ```
+   This notebook connects to your local MySQL instance, loads the `analysis_ready` view, engineers features (poverty rate, unemployment rate, log population), and walks through univariate, bivariate, and multivariate analysis. Make sure to update the MySQL config at the top of the notebook with your own credentials — same as Steps 2 and 3.
+
 ---
 
 ## Coverage Summary
@@ -168,12 +176,62 @@ Two SQL views support analysis:
 
 ---
 
+## EDA Key Findings
+
+After building the database, we ran a full exploratory analysis (`code/eda.ipynb`) on the `analysis_ready` view. Here is a summary of what we learned and why it matters for modeling — the details and visualizations are all in the notebook itself, so we encourage you to run it and explore.
+
+### Target variable is heavily right-skewed
+
+`total_disasters` has a mean of 5.7 but a median of only 4, with a long right tail stretching to 149 declarations. Most counties cluster at low counts while a small number accumulate very high totals. This tells us that raw counts are not suitable for ordinary linear regression — a log transformation `log(1 + total_disasters)` produces a much more symmetric distribution. We will use this as our regression target in the modeling phase.
+
+### Raw counts are misleading — rates are necessary
+
+A county with 50,000 people in poverty sounds alarming, but if that county is Los Angeles (population ~10 million) it is a 0.5% rate. A rural county with 1,000 in poverty out of 5,000 people has a 20% rate. We engineered three derived features to make counties comparable:
+
+| Feature | Formula | Why |
+|---------|---------|-----|
+| `poverty_rate` | `poverty_count / total_population × 100` | Normalizes poverty by county size |
+| `unemployment_rate` | `unemployment_count / labor_force_count × 100` | Normalizes unemployment by labor force |
+| `log_population` | `log(1 + total_population)` | Compresses a 50-to-10-million range into a manageable scale |
+
+### FMR columns are almost perfectly correlated
+
+All five Fair Market Rent columns (`fmr_0` through `fmr_4`) are correlated above 0.94 with each other. This makes sense — a county where studios are expensive also has expensive 4-bedrooms. Including all five in a regression would cause severe multicollinearity without adding any new information.
+
+**Decision:** We use `fmr_2` (2-bedroom FMR) as the single housing cost representative, since it is HUD's primary published affordability benchmark and the most widely cited FMR in housing research.
+
+### Geography dominates — demographics alone may not be enough
+
+A state-level aggregation shows that disaster frequency is heavily concentrated in specific regions — Maine leads with ~40 mean declarations per county, followed by Gulf Coast states (Louisiana, Florida) and tornado-alley states (Kentucky, South Carolina). Meanwhile, western mountain states and the Pacific Northwest have far fewer declarations.
+
+This is the biggest takeaway from EDA: a county's location on the Gulf Coast hurricane track or in tornado alley is **not encoded** in its poverty rate, median income, or housing cost. Demographics alone may underpredict disaster frequency because they cannot capture geographic exposure. We plan to test this directly in the modeling phase by comparing models with and without state-level indicator variables (fixed effects).
+
+### 80 counties dropped due to missing data — and they are not random
+
+The `LEFT JOIN` design preserved all counties, but 80 rows have at least one NULL across Census or HUD columns. Profiling these counties reveals they are systematically different: higher mean disaster count (10.8 vs 5.4), concentrated in US territories (American Samoa, CNMI, USVI), Alaska non-standard jurisdictions, and Connecticut's restructured county-equivalents. This is a data infrastructure limitation — three independently maintained federal datasets do not share uniform geographic coverage — not a data entry error. Listwise deletion drops only 2.4% of rows but introduces a mild selection bias that we note as a model limitation.
+
+### Proposed feature set for modeling
+
+Based on everything we learned in EDA, our candidate predictors going into the modeling phase are:
+
+| Feature | Role |
+|---------|------|
+| `log_population` | County size (log-transformed) |
+| `median_household_income` | Economic capacity |
+| `poverty_rate` | Economic vulnerability (derived) |
+| `unemployment_rate` | Labor market health (derived) |
+| `fmr_2` | Housing cost proxy (2-bedroom FMR) |
+| `metro` | Urban/rural classification (binary) |
+
+---
+
 ## Tech Stack
 
 - **Language:** Python 3, Jupyter Notebook
 - **Database:** MySQL 8.0 (Docker)
-- **Libraries:** `requests`, `pandas`, `numpy`, `mysql-connector-python`, `sqlalchemy`
-- **Planned modeling:** scikit-learn, XGBoost/LightGBM, matplotlib/seaborn
+- **ETL & Analysis:** `requests`, `pandas`, `numpy`, `mysql-connector-python`, `sqlalchemy`
+- **Visualization:** `matplotlib`, `seaborn`
+- **Planned modeling:** `scikit-learn`, `statsmodels` (OLS with full inference), decision trees
 
 ---
 
